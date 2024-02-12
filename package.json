@@ -1,0 +1,14 @@
+{
+  "name": "infinite-autocraft",
+  "version": "0.1.0",
+  "description": "Auto crafter script for infinite-craft",
+  "main": "src/index.mjs",
+  "type": "module",
+  "scripts": {},
+  "author": "szdytom <szdytom@qq.com>",
+  "license": "MIT",
+  "dependencies": {
+    "better-sqlite3": "^9.4.1",
+    "node-fetch": "^3.3.2"
+  }
+}
