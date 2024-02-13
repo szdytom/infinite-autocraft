@@ -1,13 +1,22 @@
 DROP TABLE IF EXISTS Items;
 DROP TABLE IF EXISTS Recipes;
+DROP TABLE IF EXISTS EnglishWords;
 
 CREATE TABLE Items (
-	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	handle TEXT NOT NULL UNIQUE,
-	emoji TEXT DEFAULT NULL,
-	is_new INTEGER NOT NULL DEFAULT 0,
-	explore INTEGER NOT NULL DEFAULT 0,
-	reward INTEGER NOT NULL DEFAULT 0
+    id      INTEGER PRIMARY KEY AUTOINCREMENT,
+    handle  TEXT    NOT NULL
+                    UNIQUE,
+    emoji   TEXT    DEFAULT NULL,
+    is_new  INTEGER NOT NULL
+                    DEFAULT 0,
+    explore INTEGER NOT NULL
+                    DEFAULT 0,
+    reward  INTEGER NOT NULL
+                    DEFAULT 0,
+    mask    INTEGER NOT NULL
+                    DEFAULT (0),
+    dep     INTEGER,
+    freq    INTEGER
 );
 
 CREATE UNIQUE INDEX idx_items_handle ON Items(handle);
@@ -30,3 +39,11 @@ CREATE TABLE Recipes (
 CREATE INDEX idx_recipes_ingrA ON Recipes(ingrA_id);
 CREATE INDEX idx_recipes_ingrB ON Recipes(ingrB_id);
 CREATE INDEX idx_recipes_res ON Recipes(result_id);
+
+CREATE TABLE EnglishWords (
+    id    INTEGER PRIMARY KEY AUTOINCREMENT,
+    lemma TEXT    NOT NULL,
+    PoS   TEXT    NOT NULL,
+    freq  INTEGER
+);
+
