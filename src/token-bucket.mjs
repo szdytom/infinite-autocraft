@@ -1,4 +1,4 @@
-class Queue {
+export class Queue {
 	constructor() {
 		this.val = [];
 		this.ptr = 0;

@@ -1,6 +1,6 @@
 import fetch from 'node-fetch';
 import Database from 'better-sqlite3';
-import { AsyncTokenBucket } from './token-bucket.mjs';
+import { AsyncTokenBucket, Queue } from './token-bucket.mjs';
 
 const CLASSIC_UA = 'Mozilla/5.0 (X11; Linux x86_64; rv:122.0) Gecko/20100101 Firefox/122.0';
 const API_ENDPOINT = 'https://neal.fun/api/infinite-craft/pair?';
@@ -54,22 +54,51 @@ async function doCraft(ingrA, ingrB, retry = 10) {
 }
 
 const db = new Database('./craft.sqlite');
-db.pragma('journal_mode = WAL');
+db.pragma('journal_mode = delete');
 let explored_N = db.prepare('SELECT COUNT(*) AS res FROM Recipes').get().res;
 
-const best_explore_item = db.prepare(`
-SELECT * FROM Items WHERE freq IS NOT NULL ORDER BY
+const bestUC_explore_item = db.prepare(`
+SELECT * FROM Items WHERE
+freq IS NOT NULL AND
+((mask & 1) = 0) ORDER BY
 	((Items.reward + 1) / (Items.explore + 1) + 0.5 * SQRT(? / (Items.explore + 1))) DESC
 LIMIT 1
 `);
 
+// const best_explore_item = db.prepare(`
+// SELECT * FROM Items WHERE id=1712 OR 1=?
+// LIMIT 1
+// `);
+
+//-- freq IS NOT NULL AND 
 const random_explore_item = db.prepare(`
-SELECT * FROM Items WHERE freq IS NOT NULL AND NOT EXISTS (
+SELECT * FROM Items WHERE
+freq IS NOT NULL AND
+((mask & 1) = 0)
+AND NOT EXISTS (
 	SELECT ingrA_id, ingrB_id FROM Recipes WHERE (
 		(ingrA_id = $other AND ingrB_id = Items.id) OR
 		(ingrA_id = Items.id AND ingrB_id = $other)
 	)
 ) ORDER BY RANDOM() LIMIT 1
+`);
+
+const possible_explore_items_with = db.prepare(`
+SELECT * FROM Items WHERE
+((mask & 2) = 2) AND NOT EXISTS (
+	SELECT ingrA_id, ingrB_id FROM Recipes WHERE (
+		(ingrA_id = $other AND ingrB_id = Items.id) OR
+		(ingrA_id = Items.id AND ingrB_id = $other)
+	)
+)
+`);
+
+const possible_self_explore_items = db.prepare(`
+SELECT * FROM Items WHERE
+((mask & 2) = 2) AND NOT EXISTS (
+	SELECT ingrA_id, ingrB_id FROM Recipes WHERE
+		(ingrA_id = Items.id AND ingrB_id = Items.id)
+)
 `);
 
 const update_explore_count = db.prepare(
@@ -107,15 +136,9 @@ const load_word_by_lemma = db.prepare(`
 SELECT * FROM EnglishWords WHERE lemma=LOWER(?)
 `)
 
-async function exploreOnce() {
-	const lnN2 = Math.log(explored_N + 1) / 2;
-	const ingrA = best_explore_item.get(lnN2);
+async function exploreWith(ingrA, ingrB) {
 	update_explore_count.run(ingrA.id);
-	explored_N += 1;
-	const ingrB = random_explore_item.get({other: ingrA.id});
-	if (ingrB == null) { return false; }
 	update_explore_count.run(ingrB.id);
-
 	create_new_recipe.run(ingrA.id, ingrB.id, null);
 	let recc = load_recipe_by_ingrediants.get({aid: ingrA.id, bid: ingrB.id});
 
@@ -139,11 +162,69 @@ async function exploreOnce() {
 	return true;
 }
 
-async function main() {
+async function exploreUC() {
+	const lnN2 = Math.log(explored_N + 1) / 2;
+	const ingrA = bestUC_explore_item.get(lnN2);
+	explored_N += 1;
+	const ingrB = random_explore_item.get({other: ingrA.id});
+	if (ingrB == null) {
+		update_explore_count.run(ingrA.id);
+		return false;
+	}
+	return await exploreWith(ingrA, ingrB);
+}
+
+async function exploreWithChecked(ingrA, ingrB) {
+	if (ingrA == null || ingrB == null) {
+		return false;
+	}
+
+	const rec = load_recipe_by_ingrediants.get({ aid: ingrA.id, bid: ingrB.id });
+	if (rec != null) {
+		console.log(`[SKIPPED] Craft ${ingrA.handle} and ${ingrB.handle}.`);
+		return true;
+	}
+	return await exploreWith(ingrA, ingrB);
+}
+
+async function exploreCustom(Ahandle, Bhandle) {
+	return await exploreWithChecked(load_item_by_handle.get(Ahandle), load_item_by_handle.get(Bhandle));
+}
+
+let eq = new Queue();
+async function exploreByQueue() {
+	if (eq.empty()) {
+		return false;
+	}
+	const [Ahandle, Bhandle] = eq.front();
+	eq.popFront();
+	return await exploreCustom(Ahandle, Bhandle);
+}
+
+function buildBasicExploreList() {
+	const basics = ['Water', 'Wind', 'Fire', 'Earth', 'Time', 'Crash', 'Empty'];
+	for (const b of basics) {
+		const ingrB = load_item_by_handle.get(b);
+		const rows = possible_explore_items_with.all(ingrB.id);
+		for (const a of rows) {
+			eq.pushBack([a.handle, b.handle]);
+		}
+	}
+}
+
+function buildSelfExploreList() {
+	const rows = possible_self_explore_items.all();
+	for (const a of rows) {
+		eq.pushBack([a.handle, a.handle]);
+	}
+}
+
+let iv = null;
+async function main(exploreFunc) {
 	let fail_cnt = 0, task_cnt = 0;
 	let bucket = new AsyncTokenBucket(2);
 	await bucket.aquire();
-	let iv = setInterval(() => {
+	iv = setInterval(() => {
 		if (fail_cnt < 1) {
 			if (task_cnt < 2) {
 				bucket.refill();
@@ -151,13 +232,13 @@ async function main() {
 		} else {
 			clearInterval(iv);
 		}
-	}, 500);
+	}, 250);
 
 	while (true) {
 		await bucket.aquire();
 		queueMicrotask(async () => {
 			task_cnt += 1;
-			if (!await exploreOnce()) {
+			if (!await exploreFunc()) {
 				fail_cnt += 1;
 			}
 			task_cnt -= 1;
@@ -165,11 +246,17 @@ async function main() {
 	}
 }
 
-main();
+buildSelfExploreList();
+buildBasicExploreList();
+main(exploreByQueue);
 // console.log(await doCraft('Wig', 'Lizard'));
 // exploreOnce();
+// exploreCustom('Muddy Sushi', 'Race');
 
 process.on('exit', () => db.close());
-process.on('SIGHUP', () => process.exit(128 + 1));
-process.on('SIGINT', () => process.exit(128 + 2));
+process.on('SIGHUP', () => clearInterval(iv));
+process.on('SIGINT', () => {
+	console.log('Exiting...');
+	clearInterval(iv)
+});
 process.on('SIGTERM', () => process.exit(128 + 15));

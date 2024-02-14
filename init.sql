@@ -25,6 +25,7 @@ INSERT INTO Items (handle, emoji) VALUES ('Water', char(128167));
 INSERT INTO Items (handle, emoji) VALUES ('Fire', char(128293));
 INSERT INTO Items (handle, emoji) VALUES ('Wind', char(127788));
 INSERT INTO Items (handle, emoji) VALUES ('Earth', char(127757));
+INSERT INTO Items (handle, emoji, mask) VALUES ('Nothing', '', 1);
 
 CREATE TABLE Recipes (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
