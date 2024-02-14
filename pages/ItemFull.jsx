@@ -11,12 +11,12 @@ export default function ItemFull({ value }) {
 				<tr><td>Fundamental:</td><td>{value.isFundamental() ? 'Yes' : 'No'}</td></tr>
 				<tr><td>Carfting Depth:</td><td>{value.dep}</td></tr>
 			</tbody></table>
-			<h2>Obtaining</h2>
+			<h2>Known Recipes That Crafts {value.handle}</h2>
 			<RecipeTable recipes={value.craft_by}></RecipeTable>
-			<h2>Usage</h2>
+			<h2>Known Recipes That Uses {value.handle}</h2>
 			<RecipeTable recipes={value.can_craft}></RecipeTable>
-			<h2>Possible Obtaining Path</h2>
-			<RecipeTable recipes={value.calcPath()} indexed="Step"></RecipeTable>
+			<h2>An Example Way Of Obtaining {value.handle}</h2>
+			<RecipeTable recipes={value.calcPath()} indexed='Step' emptyInfo='This is an fundamental element.'></RecipeTable>
 		</>
 	);
 }

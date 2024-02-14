@@ -4,7 +4,25 @@
 
 main {
 	width: 800px;
-	margin: 0 auto;
+	margin: 20px auto;
+}
+
+footer {
+	width: 800px;
+	margin-top: 20px;
+	margin-left: auto;
+	margin-right: auto;
+	margin-bottom: 10px;
+	color: #a8a8a8;
+	font-size: xx-small;
+}
+
+footer a {
+	color: #a8a8a8;
+}
+
+footer .important-footer {
+	color: black;
 }
 
 .full-width {
@@ -13,4 +31,8 @@ main {
 
 html {
 	background-color: #ffffff;
+}
+
+a {
+	color: #0000ee;
 }

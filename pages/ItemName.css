@@ -1,0 +1,13 @@
+.item-name, .item-link {
+	font-style: normal;
+	font-weight: normal;
+}
+
+.item-link {
+	color: #0000ee;
+	text-decoration: underline;
+}
+
+.item-link:hover {
+	cursor: pointer;
+}

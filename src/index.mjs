@@ -58,7 +58,7 @@ let explored_N = db.prepare('SELECT COUNT(*) AS res FROM Recipes').get().res;
 
 const bestUC_explore_item = db.prepare(`
 SELECT * FROM Items WHERE
-freq IS NOT NULL AND
+-- freq IS NOT NULL AND
 ((mask & 1) = 0) ORDER BY
 	((Items.reward + 1) / (Items.explore + 1) + 0.5 * SQRT(? / (Items.explore + 1))) DESC
 LIMIT 1
@@ -72,7 +72,7 @@ LIMIT 1
 //-- freq IS NOT NULL AND 
 const random_explore_item = db.prepare(`
 SELECT * FROM Items WHERE
-freq IS NOT NULL AND
+-- freq IS NOT NULL AND
 ((mask & 1) = 0)
 AND NOT EXISTS (
 	SELECT ingrA_id, ingrB_id FROM Recipes WHERE (
@@ -116,7 +116,7 @@ const load_item_by_handle = db.prepare(`
 SELECT * FROM Items WHERE (handle = ?)
 `);
 
-const load_recipe_by_ingrediants = db.prepare(`
+const load_recipe_by_ingredients = db.prepare(`
 SELECT * FROM Recipes WHERE (
 	(ingrA_id = $aid AND ingrB_id = $bid) OR
 	(ingrA_id = $bid AND ingrB_id = $aid)
@@ -136,10 +136,14 @@ SELECT * FROM EnglishWords WHERE lemma=LOWER(?)
 `)
 
 async function exploreWith(ingrA, ingrB) {
+	if ((ingrA.mask & 1) == 1 || (ingrB.mask & 1) == 1) {
+		console.error('[ERROR] BANNED ITEM USED!!!');
+		return false;
+	}
 	update_explore_count.run(ingrA.id);
 	update_explore_count.run(ingrB.id);
 	create_new_recipe.run(ingrA.id, ingrB.id, null);
-	let recc = load_recipe_by_ingrediants.get({aid: ingrA.id, bid: ingrB.id});
+	let recc = load_recipe_by_ingredients.get({aid: ingrA.id, bid: ingrB.id});
 
 	const res = await doCraft(ingrA.handle, ingrB.handle);
 	if (res == null) {
@@ -178,7 +182,7 @@ async function exploreWithChecked(ingrA, ingrB) {
 		return false;
 	}
 
-	const rec = load_recipe_by_ingrediants.get({ aid: ingrA.id, bid: ingrB.id });
+	const rec = load_recipe_by_ingredients.get({ aid: ingrA.id, bid: ingrB.id });
 	if (rec != null) {
 		console.log(`[SKIPPED] Craft ${ingrA.handle} and ${ingrB.handle}.`);
 		return true;
@@ -201,7 +205,7 @@ async function exploreByQueue() {
 }
 
 function buildBasicExploreList() {
-	const basics = ['Fire', 'Time', 'Crash', 'Empty', 'Mirror', 'Never', 'Always', 'Alone'];
+	const basics = ['Not', 'Time', 'Crash', 'Empty', 'Never', 'Always', 'Alone'];
 	for (const b of basics) {
 		const ingrB = load_item_by_handle.get(b);
 		const rows = possible_explore_items_with.all({ other: ingrB.id });

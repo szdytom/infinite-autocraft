@@ -96,6 +96,8 @@ export class Item {
 		return this.handle;
 	}
 
+	static count = data.item_id_list.length;
+
 	static items_loaded = new Map();
 
 	static loadById(id) {
@@ -121,5 +123,30 @@ export class Item {
 		}
 
 		return this.loadById(id);
+	}
+
+	static getRandomHandle() {
+		const v = Math.floor(Math.random() * this.count);
+		const id = data.item_id_list[v];
+		return data.items_by_id[id].handle;
+	}
+
+	static findByHandleContains(keyword) {
+		keyword = keyword.toLowerCase();
+		let matches = [];
+		for (let id of data.item_id_list) {
+			const row = data.items_by_id[id];
+			const handle = row.handle.toLowerCase();
+			if (handle.includes(keyword)) {
+				matches.push(row);
+			}
+		}
+
+		matches.sort((a, b) => {
+			if (a.handle.length < b.handle.length) { return -1; }
+			if (a.handle.length > b.handle.length) { return 1; }
+			return 0;
+		});
+		return matches.map(r => Item.loadById(r.id));
 	}
 }

@@ -111,7 +111,7 @@ while (!q.empty()) {
 
 	for (const edge of x.can_craft) {
 		const p = edge.ingrA.id == xid ? edge.ingrB : edge.ingrA;
-		if (p.dep == -1) {
+		if (p.dep == -1 || p.id == NOTHING_ID) {
 			continue;
 		}
 

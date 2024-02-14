@@ -28,6 +28,14 @@ WHERE (
 );
 `);
 
+const nothing_check = db.prepare(`
+SELECT COUNT(*) AS res FROM Recipes WHERE ingrA_id = 5 OR ingrB_id = 5;
+`);
+
+if (nothing_check.get().res > 0) {
+	console.log('WARN! Nothing used in recipe!!!');
+}
+
 async function main() {
 	let q = new PriorityQueue();
 	let dis = [];
