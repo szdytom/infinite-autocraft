@@ -5,3 +5,4 @@ package-lock.json
 backups
 dist
 *.parcel-cache
+pages/data.json
