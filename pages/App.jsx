@@ -4,6 +4,8 @@ import ItemSearch from './ItemSearch';
 
 export function App() {
 	return (
-		<ItemSearch></ItemSearch>
+		<main>
+			<ItemSearch></ItemSearch>
+		</main>
 	)
 }

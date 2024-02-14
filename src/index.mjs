@@ -4,7 +4,6 @@ import { AsyncTokenBucket, Queue } from './token-bucket.mjs';
 
 const CLASSIC_UA = 'Mozilla/5.0 (X11; Linux x86_64; rv:122.0) Gecko/20100101 Firefox/122.0';
 const API_ENDPOINT = 'https://neal.fun/api/infinite-craft/pair?';
-// const API_ENDPOINT = 'https://httpbin.org/anything?';
 const DISGUISE_HEADERS = {
 	'User-Agent': CLASSIC_UA,
 	'Accept-Language': 'zh-CN,zh;q=0.8,en-US;q=0.7,zh-TW;q=0.5,zh-HK;q=0.3,en;q=0.2',
@@ -32,10 +31,10 @@ async function doCraft(ingrA, ingrB, retry = 10) {
 		const data = await req.text();
 		if (data.startsWith('<!DOCTYPE')) {
 			if (retry <= 0) {
-				console.error('[ERROR] All retries used, CloudFlare Protecting');
+				console.error('[ERROR] All retries used, CloudFlare Rate Limit');
 				return null;
 			} else {
-				console.error('[RETRY] CloudFlare Protecting');
+				console.error('[RETRY] CloudFlare Rate Limit');
 				await sleep(1000);
 				return await doCraft(ingrA, ingrB, retry - 1);
 			}
@@ -202,12 +201,12 @@ async function exploreByQueue() {
 }
 
 function buildBasicExploreList() {
-	const basics = ['Water', 'Wind', 'Fire', 'Earth', 'Time', 'Crash', 'Empty'];
+	const basics = ['Fire', 'Time', 'Crash', 'Empty', 'Mirror', 'Never', 'Always', 'Alone'];
 	for (const b of basics) {
 		const ingrB = load_item_by_handle.get(b);
 		const rows = possible_explore_items_with.all({ other: ingrB.id });
 		for (const a of rows) {
-			eq.pushBack([a.handle, b.handle]);
+			eq.pushBack([a.handle, b]);
 		}
 	}
 }

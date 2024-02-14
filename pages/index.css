@@ -1,3 +1,16 @@
 * {
 	line-height: 1.3em;
 }
+
+main {
+	width: 800px;
+	margin: 0 auto;
+}
+
+.full-width {
+	width: 100%;
+}
+
+html {
+	background-color: #ffffff;
+}

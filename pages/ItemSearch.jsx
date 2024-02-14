@@ -14,7 +14,9 @@ export default function ItemSearch() {
 		<div>
 			<h1>Search Items</h1>
 			<SearchBox onSearch={handleSearch} />
-			{searchResult == null ? null : <ItemFull value={searchResult}></ItemFull>}
+			<div className='search-result'>
+				{searchResult == null ? null : <ItemFull value={searchResult}></ItemFull>}
+			</div>
 		</div>
 	);
 };

@@ -1,5 +1,5 @@
 import './info-table.css';
-import { RecipeDisplay } from './RecipeDisplay';
+import { RecipeTable } from './RecipeTable';
 
 export default function ItemFull({ value }) {
 	return (
@@ -12,17 +12,11 @@ export default function ItemFull({ value }) {
 				<tr><td>Carfting Depth:</td><td>{value.dep}</td></tr>
 			</tbody></table>
 			<h2>Obtaining</h2>
-			<ul>
-				{value.craft_by.map(x => <li><RecipeDisplay value={x}></RecipeDisplay></li>)}
-			</ul>
+			<RecipeTable recipes={value.craft_by}></RecipeTable>
 			<h2>Usage</h2>
-			<ul>
-				{value.can_craft.map(x => <li><RecipeDisplay value={x}></RecipeDisplay></li>)}
-			</ul>
+			<RecipeTable recipes={value.can_craft}></RecipeTable>
 			<h2>Possible Obtaining Path</h2>
-			<ol>
-				{value.calcPath().map(x => <li><RecipeDisplay value={x}></RecipeDisplay></li>)}
-			</ol>
+			<RecipeTable recipes={value.calcPath()} indexed="Step"></RecipeTable>
 		</>
 	);
 }
