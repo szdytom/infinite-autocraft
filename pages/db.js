@@ -51,6 +51,13 @@ export class Item {
 		return Recipes.loadById(this._craft_path_source);
 	}
 
+	note() {
+		if (this.handle == 'Nothing') {
+			return 'This element is only used to indicate the result of elements that don\'t craft, you cannot actually craft this element in game.';
+		}
+		return null;
+	}
+
 	isFundamental() {
 		return this.dep == 0;
 	}
