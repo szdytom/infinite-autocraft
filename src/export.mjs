@@ -3,7 +3,7 @@ import Database from 'better-sqlite3';
 const db = new Database('./craft.sqlite', { readonly: true });
 
 const get_items = db.prepare(`
-SELECT * FROM Items WHERE (mask & 1) = 0;
+SELECT * FROM Items WHERE (mask & 1) = 0 ORDER BY dep ASC;
 `);
 
 const rows = get_items.all();

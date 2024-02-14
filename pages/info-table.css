@@ -1,0 +1,7 @@
+
+.info-table, .info-table tr, .info-table td {
+	border: none;
+	padding: 0;
+	outline: none;
+	border-spacing: 0;
+}

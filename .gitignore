@@ -3,3 +3,5 @@ package-lock.json
 *.sqlite*
 *.db
 backups
+dist
+*.parcel-cache

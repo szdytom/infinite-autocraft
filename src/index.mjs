@@ -205,7 +205,7 @@ function buildBasicExploreList() {
 	const basics = ['Water', 'Wind', 'Fire', 'Earth', 'Time', 'Crash', 'Empty'];
 	for (const b of basics) {
 		const ingrB = load_item_by_handle.get(b);
-		const rows = possible_explore_items_with.all(ingrB.id);
+		const rows = possible_explore_items_with.all({ other: ingrB.id });
 		for (const a of rows) {
 			eq.pushBack([a.handle, b.handle]);
 		}
