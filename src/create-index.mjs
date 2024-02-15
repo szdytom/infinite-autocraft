@@ -84,7 +84,9 @@ for (const recipe of all_recipes) {
 	const r = new Recipes(recipe.id, ingrA, ingrB, result);
 	recipes_by_id[recipe.id] = r;
 	ingrA.addCanCraftRecipe(r);
-	ingrB.addCanCraftRecipe(r);
+	if (ingrB != ingrA) {
+		ingrB.addCanCraftRecipe(r);
+	}
 	result.addCraftByRecipe(r);
 }
 

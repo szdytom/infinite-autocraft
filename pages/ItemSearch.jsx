@@ -15,7 +15,7 @@ function SearchResult({ keyword, onClick }) {
 		return <ItemFull value={exact_match}></ItemFull>;
 	}
 
-	const contain_match = Item.findByHandleContains(keyword);
+	const contain_match = Item.findByHandleContains(keyword.trim());
 	if (contain_match.length > 0) {
 		const display_limit = 10;
 		if (contain_match.length > display_limit) {

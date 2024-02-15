@@ -10,7 +10,7 @@ export function RecipeTable({recipes, indexed = false, emptyInfo = 'No recipes a
 		<table className='recipe-table full-width'>
 			<thead>
 				<tr>
-					{ indexed && <th>{indexed}</th>}
+					{ indexed && <th className='recipe-table-idx'>{indexed}</th>}
 					<th>First Ingredient</th>
 					<th>Second Ingredient</th>
 					<th>Craft Result</th>
