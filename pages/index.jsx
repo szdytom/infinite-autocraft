@@ -1,30 +1,21 @@
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
+import { initailize } from './db';
 
 const container = document.getElementById('app');
+
+container.innerHTML = 'Please wait a few seconds while we are extracting data...';
+await initailize();
+
 const root = createRoot(container);
 root.render(<App />);
 
-async function registerServiceWorker() {
+async function unregisterServiceWorker() {
 	if ('serviceWorker' in navigator) {
-		try {
-			const registration = await navigator.serviceWorker.register(
-				new URL('./sw.js', import.meta.url),
-				{ scope: './' },
-			);
-			if (registration.installing) {
-				console.log('SW installing...');
-			} else if (registration.waiting) {
-				console.log('SW installed.');
-			} else if (registration.active) {
-				console.log('SW Activated.');
-			}
-		} catch (error) {
-			console.error(`SW Failed: ${error}`);
-		}
+		await navigator.serviceWorker.unregister();
 	}
 };
 
 if (process.env.NODE_ENV === 'production') {
-	registerServiceWorker();
+	unregisterServiceWorker();
 }

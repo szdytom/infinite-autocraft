@@ -1,0 +1,8 @@
+{
+	"name": "binary-struct",
+	"type": "module",
+	"main": "index.mjs",
+	"dependencies": {
+		"buffer": "^6.0.3"
+	}
+}

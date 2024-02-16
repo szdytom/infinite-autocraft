@@ -58,7 +58,7 @@ let explored_N = db.prepare('SELECT COUNT(*) AS res FROM Recipes').get().res;
 
 const bestUC_explore_item = db.prepare(`
 SELECT * FROM Items WHERE
--- freq IS NOT NULL AND
+freq IS NOT NULL AND
 ((mask & 1) = 0) ORDER BY
 	((Items.reward + 1) / (Items.explore + 1) + 0.5 * SQRT(? / (Items.explore + 1))) DESC
 LIMIT 1
@@ -72,7 +72,7 @@ LIMIT 1
 //-- freq IS NOT NULL AND 
 const random_explore_item = db.prepare(`
 SELECT * FROM Items WHERE
--- freq IS NOT NULL AND
+freq IS NOT NULL AND
 ((mask & 1) = 0)
 AND NOT EXISTS (
 	SELECT ingrA_id, ingrB_id FROM Recipes WHERE (
@@ -205,7 +205,7 @@ async function exploreByQueue() {
 }
 
 function buildBasicExploreList() {
-	const basics = ['Not', 'Time', 'Crash', 'Empty', 'Never', 'Always', 'Alone'];
+	const basics = ['Animal', 'Normal', 'Micro', 'Latin'];
 	for (const b of basics) {
 		const ingrB = load_item_by_handle.get(b);
 		const rows = possible_explore_items_with.all({ other: ingrB.id });
@@ -225,11 +225,11 @@ function buildSelfExploreList() {
 let iv = null;
 async function main(exploreFunc) {
 	let fail_cnt = 0, task_cnt = 0;
-	let bucket = new AsyncTokenBucket(2);
+	let bucket = new AsyncTokenBucket(4);
 	await bucket.aquire();
 	iv = setInterval(() => {
 		if (fail_cnt < 1) {
-			if (task_cnt < 2) {
+			if (task_cnt < 4) {
 				bucket.refill();
 			}
 		} else {
@@ -249,11 +249,10 @@ async function main(exploreFunc) {
 	}
 }
 
-buildSelfExploreList();
-buildBasicExploreList();
-main(exploreByQueue);
+// buildSelfExploreList();
+// buildBasicExploreList();
+main(exploreUC);
 // console.log(await doCraft('Wig', 'Lizard'));
-// exploreOnce();
 // exploreCustom('Muddy Sushi', 'Race');
 
 process.on('exit', () => db.close());

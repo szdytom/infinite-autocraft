@@ -1,5 +1,45 @@
-import * as data from './data.json';
 import { Queue } from '../src/token-bucket.mjs';
+import { ZstdInit } from '@oneidentity/zstd-js/wasm/decompress';
+import { BinaryTransferData } from '../src/data-typedef.mjs';
+import { deserializeFromBinary } from 'binary-struct';
+
+async function downloadRawData() {
+	const response = await fetch(new URL('../craft.dat.zst', import.meta.url));
+	const raw = await response.arrayBuffer();
+	return raw;
+}
+
+let NOTHING_ID;
+const items_by_id = new Map(), recipes_by_id = new Map();
+const items_index_by_handle = new Map();
+const item_id_list = [], recipes_id_list = [];
+
+export async function initailize() {
+	const [{ZstdSimple}, raw_data] = await Promise.all([ZstdInit(), downloadRawData()]);
+	const bdata = new DataView(ZstdSimple.decompress(new Uint8Array(raw_data)).buffer);
+	const adata = deserializeFromBinary(bdata, BinaryTransferData);
+
+	NOTHING_ID = adata.NOTHING_ID;
+	for (const b of adata.items) {
+		item_id_list.push(b.id);
+		items_index_by_handle.set(b.handle, b.id);
+		b._can_craft = [];
+		b._craft_by = [];
+		items_by_id.set(b.id, b);
+	}
+
+	for (const b of adata.recipes) {
+		recipes_id_list.push(b.id);
+		recipes_by_id.set(b.id, b);
+		items_by_id.get(b.ingrA_id)._can_craft.push(b.id);
+		if (b.ingrA_id != b.ingrB_id) {
+			items_by_id.get(b.ingrB_id)._can_craft.push(b.id);
+		}
+		items_by_id.get(b.ingrA_id)._craft_by.push(b.id);
+	}
+
+	Item.count = adata.items.count;
+}
 
 export class Recipes {
 	constructor({id, ingrA, ingrB, result}) {
@@ -12,16 +52,20 @@ export class Recipes {
 	static recipes_loaded = new Map();
 
 	static loadById(id) {
+		if (id == 0 || !recipes_by_id.has(id)) {
+			return null;
+		}
+
 		if (this.recipes_loaded.has(id)) {
 			return this.recipes_loaded.get(id);
 		}
 
-		const {ingrA, ingrB, result} = data.recipes_by_id[id];
+		const {ingrA_id, ingrB_id, result_id} = recipes_by_id.get(id);
 		const res = new Recipes({
 			id,
-			ingrA: Item.loadById(ingrA),
-			ingrB: Item.loadById(ingrB),
-			result: Item.loadById(result),
+			ingrA: Item.loadById(ingrA_id),
+			ingrB: Item.loadById(ingrB_id),
+			result: Item.loadById(result_id),
 		});
 		this.recipes_loaded.set(id, res);
 		return res;
@@ -52,7 +96,7 @@ export class Item {
 	}
 
 	note() {
-		if (this.handle == 'Nothing') {
+		if (this.id == NOTHING_ID) {
 			return 'This element is only used to indicate the result of elements that don\'t craft, you cannot actually craft this element in game.';
 		}
 		return null;
@@ -103,7 +147,7 @@ export class Item {
 		return this.handle;
 	}
 
-	static count = data.item_id_list.length;
+	static count = 0;
 
 	static items_loaded = new Map();
 
@@ -112,19 +156,19 @@ export class Item {
 			this.items_loaded.get(id);
 		}
 
-		const {handle, emoji, can_craft, craft_by, dep, craft_path_source} = data.items_by_id[id];
+		const {handle, emoji, _can_craft, _craft_by, dep, _craft_path_source} = items_by_id.get(id);
 		const res = new Item({
 			id, handle, emoji, dep,
-			can_craft,
-			craft_by,
-			craft_path_source,
+			_can_craft,
+			_craft_by,
+			_craft_path_source,
 		});
 		this.items_loaded.set(id, res);
 		return res;
 	}
 
 	static loadByHandle(handle) {
-		const id = data.items_index_by_handle[handle];
+		const id = items_index_by_handle.get(handle);
 		if (id == null) {
 			return null;
 		}
@@ -134,15 +178,15 @@ export class Item {
 
 	static getRandomHandle() {
 		const v = Math.floor(Math.random() * this.count);
-		const id = data.item_id_list[v];
-		return data.items_by_id[id].handle;
+		const id = item_id_list[v];
+		return items_by_id.get(id).handle;
 	}
 
 	static findByHandleContains(keyword) {
 		keyword = keyword.toLowerCase();
 		let matches = [];
-		for (let id of data.item_id_list) {
-			const row = data.items_by_id[id];
+		for (let id of item_id_list) {
+			const row = items_by_id.get(id);
 			const handle = row.handle.toLowerCase();
 			if (handle.includes(keyword)) {
 				matches.push(row);

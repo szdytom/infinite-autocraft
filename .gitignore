@@ -6,3 +6,5 @@ backups
 dist
 *.parcel-cache
 pages/data.json
+*.dat
+*.zst

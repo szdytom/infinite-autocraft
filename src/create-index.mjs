@@ -1,12 +1,15 @@
 import Database from 'better-sqlite3';
 import { PriorityQueue } from './pq.mjs';
+import fs from 'node:fs/promises';
+import { serializeToBinary } from 'binary-struct';
+import { BinaryItem, BinaryRecipe, BinaryTransferData } from './data-typedef.mjs';
 
 const db = new Database('./craft.sqlite', { readonly: true });
 
 const all_items = db.prepare('SELECT id, handle, emoji FROM Items').all();
-const all_recipes = db.prepare('SELECT id, ingrA_id, ingrB_id, result_id FROM Recipes').all();
+const all_recipes = db.prepare('SELECT id, ingrA_id, ingrB_id, result_id FROM Recipes WHERE result_id IS NOT NULL').all();
 
-class Recipes {
+class Recipe {
 	constructor(id, ingrA, ingrB, result) {
 		this.id = id;
 		this.ingrA = ingrA;
@@ -54,26 +57,19 @@ class Item {
 	toString() {
 		return this.handle;
 	}
-
-	toJSON() {
-		return {
-			handle: this.handle,
-			id: this.id,
-			emoji: this.emoji,
-			dep: this.dep,
-			can_craft: this.can_craft.map(x => x.id),
-			craft_by: this.craft_by.map(x => x.id),
-			craft_path_source: this.craft_path_source?.id,
-		};
-	}
 }
 
 const item_id_list = [], recipe_id_list = [];
 const items_by_id = {}, recipes_by_id = {};
 
+let NOTHING_ID = null;
 for (const item of all_items) {
 	item_id_list.push(item.id);
-	items_by_id[item.id] = new Item(item.id, item.handle, item.emoji);
+	let it = new Item(item.id, item.handle, item.emoji);
+	items_by_id[item.id] = it;
+	if (it.isNothing()) {
+		NOTHING_ID = it.id;
+	}
 }
 
 for (const recipe of all_recipes) {
@@ -81,23 +77,13 @@ for (const recipe of all_recipes) {
 	const ingrA = items_by_id[recipe.ingrA_id];
 	const ingrB = items_by_id[recipe.ingrB_id];
 	const result = items_by_id[recipe.result_id];
-	const r = new Recipes(recipe.id, ingrA, ingrB, result);
+	const r = new Recipe(recipe.id, ingrA, ingrB, result);
 	recipes_by_id[recipe.id] = r;
 	ingrA.addCanCraftRecipe(r);
 	if (ingrB != ingrA) {
 		ingrB.addCanCraftRecipe(r);
 	}
 	result.addCraftByRecipe(r);
-}
-
-const items_index_by_handle = {};
-let NOTHING_ID = null;
-for (const id of item_id_list) {
-	const item = items_by_id[id];
-	items_index_by_handle[item.handle] = item.id;
-	if (item.isNothing()) {
-		NOTHING_ID = item.id;
-	}
 }
 
 let q = new PriorityQueue();
@@ -127,13 +113,32 @@ while (!q.empty()) {
 	}
 }
 
-console.log(JSON.stringify({
-	item_id_list,
-	items_by_id,
-	recipe_id_list,
-	recipes_by_id,
-	items_index_by_handle,
-	NOTHING_ID,
-}));
+let res = new BinaryTransferData();
+res.NOTHING_ID = NOTHING_ID;
+res.items = [];
+res.recipes = [];
+for (const id of item_id_list) {
+	const it = items_by_id[id];
+	let b = new BinaryItem();
+	b.id = it.id;
+	b.handle = it.handle;
+	b.emoji = it.emoji;
+	b.dep = it.dep;
+	b._craft_path_source = it.craft_path_source?.id ?? 0,
+	res.items.push(b);
+}
+
+
+for (const id of recipe_id_list) {
+	const recipe = recipes_by_id[id];
+	let b = new BinaryRecipe();
+	b.id = recipe.id;
+	b.ingrA_id = recipe.ingrA.id;
+	b.ingrB_id = recipe.ingrB.id;
+	b.result_id = recipe.result.id;
+	res.recipes.push(b);
+}
+
+await fs.writeFile('./craft.dat', Buffer.from(serializeToBinary(res, BinaryTransferData)));
 
 process.on('exit', () => db.close());
