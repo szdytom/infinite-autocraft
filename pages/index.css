@@ -42,3 +42,10 @@ a {
 	width: 1px;
 	height: 1px;
 }
+
+.a-button {
+	margin-left: 5px;
+	margin-right: 5px;
+	text-decoration: underline;
+	cursor: pointer;
+}

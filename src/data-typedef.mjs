@@ -2,7 +2,7 @@ import { BASIC_TYPES } from 'binary-struct';
 
 export class BinaryRecipe {
 	static typedef = [
-		{ field: 'id',			type: BASIC_TYPES.u16 },
+		{ field: 'id',			type: BASIC_TYPES.u32 },
 		{ field: 'ingrA_id',	type: BASIC_TYPES.u16 },
 		{ field: 'ingrB_id',	type: BASIC_TYPES.u16 },
 		{ field: 'result_id',	type: BASIC_TYPES.u16 },
@@ -14,7 +14,7 @@ export class BinaryItem {
 		{ field: 'id',			type: BASIC_TYPES.u16 },
 		{ field: 'handle',		type: BASIC_TYPES.str },
 		{ field: 'emoji',		type: BASIC_TYPES.str },
-		{ field: '_craft_path_source',	type: BASIC_TYPES.u16 },
+		{ field: '_craft_path_source',	type: BASIC_TYPES.u32 },
 		{ field: 'dep',			type: BASIC_TYPES.i16 },
 	];
 }

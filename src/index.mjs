@@ -250,8 +250,8 @@ async function main(exploreFunc) {
 }
 
 // buildSelfExploreList();
-// buildBasicExploreList();
-main(exploreUC);
+buildBasicExploreList();
+main(exploreByQueue);
 // console.log(await doCraft('Wig', 'Lizard'));
 // exploreCustom('Muddy Sushi', 'Race');
 

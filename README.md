@@ -2,28 +2,13 @@
 
 This is a script to explore the game [Infinite Craft](https://neal.fun/infinite-craft/).
 
-## Getting Started
+## Structure
 
-Install Node.JS and SQLite3, then run:
-
-```
-git clone https://github.com/szdytom/infinite-autocraft
-cd infinite-autocraft
-npm i
-sqlite3 craft.sqlite < init.sql
-node src/index.mjs
-```
-
-That it! Find your result in the SQLite database `craft.sqlite`.
-
-Please open a dissusion if you want to share your progress!
-
-## Dictionary
-
-You need to import a English Word dictionary into table `EnglishWords`. Then run
-
-```sql
-UPDATE Items SET
-freq = (SELECT freq FROM EnglishWords WHERE lemma = LOWER(Items.handle) LIMIT 1)
-WHERE freq IS NULL;
-```
+- `bstruct/`: My library to encode/decode JavaScript values into/from binary (shared between local and web app).
+- `pages/`: A react APP, the frontend of the explored result.
+- `src/index.mjs`: The main explore script, does crafting and saves result into SQLite database.
+- `src/pg.mjs` and `src/token-bucket.mjs`: My simple implementations of common data structures used (shared between local and web app).
+- `src/export.mjs`: Generated a line of code that can override data of the original Infinite Craft frontend (copy and execute the output in console).
+- `src/create-index.mjs`: Encode data for the frontend app. 
+- `src/find-path.mjs`: Calculate crafting depth and ensures the database is correct.
+- `src/data-typedef.mjs`: defines the structure of binary data loaded by the frontend (shared between local and web app).

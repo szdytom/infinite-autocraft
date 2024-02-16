@@ -1,21 +1,34 @@
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
-import { initailize } from './db';
+import { initialize } from './db';
 
-const container = document.getElementById('app');
+async function main() {
+	const container = document.getElementById('app');
+	
+	container.innerHTML = '<main>Please wait a few seconds while we are downloading data...</main>';
+	try {
+		await initialize();
+	} catch(e) {
+		container.innerHTML = '<main>Failed to download data, please check your internet connection and reload the page.</main>';
+		throw e;
+	}
 
-container.innerHTML = 'Please wait a few seconds while we are extracting data...';
-await initailize();
-
-const root = createRoot(container);
-root.render(<App />);
+	const root = createRoot(container);
+	root.render(<App />);
+}
 
 async function unregisterServiceWorker() {
 	if ('serviceWorker' in navigator) {
-		await navigator.serviceWorker.unregister();
+		try {
+			let res = await navigator.serviceWorker.getRegistration();
+			if (res != null) {
+				res.unregister();
+			}
+		} catch(e) {
+			//...
+		}
 	}
 };
 
-if (process.env.NODE_ENV === 'production') {
-	unregisterServiceWorker();
-}
+main();
+unregisterServiceWorker();

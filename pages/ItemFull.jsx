@@ -16,9 +16,9 @@ export default function ItemFull({ value }) {
 			</tbody></table>
 			{ note != null && <p className='item-note'>{value.note()}</p>}
 			<h2>Known Recipes That Crafts {value.handle}</h2>
-			<RecipeTable recipes={value.craft_by}></RecipeTable>
+			<RecipeTable pageLimit={20} recipes={value.craft_by}></RecipeTable>
 			<h2>Known Recipes That Uses {value.handle}</h2>
-			<RecipeTable recipes={value.can_craft}></RecipeTable>
+			<RecipeTable pageLimit={20} recipes={value.can_craft}></RecipeTable>
 			<h2>An Example Way Of Obtaining {value.handle}</h2>
 			<RecipeTable recipes={value.calcPath()} indexed='Step' emptyInfo={note ?? 'This is an fundamental element.'}></RecipeTable>
 		</>

@@ -1,12 +1,20 @@
 import { Queue } from '../src/token-bucket.mjs';
-import { ZstdInit } from '@oneidentity/zstd-js/wasm/decompress';
 import { BinaryTransferData } from '../src/data-typedef.mjs';
 import { deserializeFromBinary } from 'binary-struct';
 
+// Due to some strange problems
+// Comment this line if debugging with `parcel serve`
+import { decompress } from '@cloudpss/zstd';
+
 async function downloadRawData() {
+	if (process.env.NODE_ENV === 'development') {
+		const response = await fetch(new URL('../craft.dat', import.meta.url));
+		const raw = await response.arrayBuffer();
+		return raw;
+	}
 	const response = await fetch(new URL('../craft.dat.zst', import.meta.url));
 	const raw = await response.arrayBuffer();
-	return raw;
+	return decompress(raw).buffer;
 }
 
 let NOTHING_ID;
@@ -14,10 +22,9 @@ const items_by_id = new Map(), recipes_by_id = new Map();
 const items_index_by_handle = new Map();
 const item_id_list = [], recipes_id_list = [];
 
-export async function initailize() {
-	const [{ZstdSimple}, raw_data] = await Promise.all([ZstdInit(), downloadRawData()]);
-	const bdata = new DataView(ZstdSimple.decompress(new Uint8Array(raw_data)).buffer);
-	const adata = deserializeFromBinary(bdata, BinaryTransferData);
+export async function initialize() {
+	const raw_data = await downloadRawData();
+	const adata = deserializeFromBinary(new DataView(raw_data), BinaryTransferData);
 
 	NOTHING_ID = adata.NOTHING_ID;
 	for (const b of adata.items) {
@@ -35,10 +42,10 @@ export async function initailize() {
 		if (b.ingrA_id != b.ingrB_id) {
 			items_by_id.get(b.ingrB_id)._can_craft.push(b.id);
 		}
-		items_by_id.get(b.ingrA_id)._craft_by.push(b.id);
+		items_by_id.get(b.result_id)._craft_by.push(b.id);
 	}
 
-	Item.count = adata.items.count;
+	Item.count = adata.items.length;
 }
 
 export class Recipes {
@@ -73,13 +80,13 @@ export class Recipes {
 }
 
 export class Item {
-	constructor({id, handle, emoji, can_craft, craft_by, dep, craft_path_source}) {
+	constructor({id, handle, emoji, _can_craft, _craft_by, dep, _craft_path_source}) {
 		this.id = id;
 		this.handle = handle;
 		this.emoji = emoji;
-		this._can_craft = can_craft;
-		this._craft_by = craft_by;
-		this._craft_path_source = craft_path_source;
+		this._can_craft = _can_craft;
+		this._craft_by = _craft_by;
+		this._craft_path_source = _craft_path_source;
 		this.dep = dep;
 	}
 

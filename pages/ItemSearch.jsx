@@ -12,7 +12,7 @@ function SearchResult({ keyword, onClick }) {
 
 	const exact_match = Item.loadByHandle(keyword);
 	if (exact_match != null) {
-		return <ItemFull value={exact_match}></ItemFull>;
+		return [<ItemFull key={exact_match.id} value={exact_match}></ItemFull>];
 	}
 
 	const contain_match = Item.findByHandleContains(keyword.trim());
