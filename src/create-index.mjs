@@ -73,6 +73,9 @@ for (const item of all_items) {
 }
 
 for (const recipe of all_recipes) {
+	if (recipe.id == NOTHING_ID) {
+		continue;
+	}
 	recipe_id_list.push(recipe.id);
 	const ingrA = items_by_id[recipe.ingrA_id];
 	const ingrB = items_by_id[recipe.ingrB_id];

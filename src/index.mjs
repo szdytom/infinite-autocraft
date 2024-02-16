@@ -205,7 +205,7 @@ async function exploreByQueue() {
 }
 
 function buildBasicExploreList() {
-	const basics = ['Animal', 'Normal', 'Micro', 'Latin'];
+	const basics = ['One'];
 	for (const b of basics) {
 		const ingrB = load_item_by_handle.get(b);
 		const rows = possible_explore_items_with.all({ other: ingrB.id });
@@ -250,10 +250,15 @@ async function main(exploreFunc) {
 }
 
 // buildSelfExploreList();
-buildBasicExploreList();
-main(exploreByQueue);
+// buildBasicExploreList();
+main(exploreUC);
 // console.log(await doCraft('Wig', 'Lizard'));
-// exploreCustom('Muddy Sushi', 'Race');
+// for (let i = 2002; i <= 2040; ++i) {
+// 	if (!await exploreCustom(i.toString(), '1')) {
+// 		break;
+// 	}
+// }
+// exploreCustom('Troop', 'Word');
 
 process.on('exit', () => db.close());
 process.on('SIGHUP', () => clearInterval(iv));

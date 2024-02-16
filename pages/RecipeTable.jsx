@@ -40,12 +40,12 @@ export function RecipeTable({recipes, pageLimit = Infinity, indexed = false, emp
 					<td className='recipe-table-res'><ItemName item={result}></ItemName></td>
 				</tr>
 			))}</tbody>
-			{displayLimit < recipes.length && (
+			{pageLimit < recipes.length && (
 				<tfoot><tr>
 					<td colSpan={indexed ? 4 : 3}>
-						<>...{recipes.length - displayLimit} rows omitted.</>
+						{displayLimit < recipes.length && <span className='recipe-table-info'>...{recipes.length - displayLimit} rows omitted.</span>}
 						{displayLimit + pageLimit < recipes.length && <a className='a-button' onClick={handleShowMore}>Show More</a>}
-						<a className='a-button' onClick={handleShowAll}>Show All{recipes.length > 1000 && '(Slow)'}</a>
+						{displayLimit < recipes.length && <a className='a-button' onClick={handleShowAll}>Show All{recipes.length > 1000 && '(Slow)'}</a>}
 						{displayLimit > pageLimit && <a className='a-button' onClick={handleShowLess}>Show Less</a>}
 					</td>
 				</tr></tfoot>
