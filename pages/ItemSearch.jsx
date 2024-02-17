@@ -92,7 +92,7 @@ export default function ItemSearch() {
 	return (
 		<div>
 			<h1 className='search-item-title'>Search Elements</h1>
-			<p className='search-item-subtitle'>...And Their Recipes In The Largest Dictionary of The Game <a href='https://neal.fun/infinite-craft/'>Infinite Craft</a> With {db_size} Entries.</p>
+			<p className='search-item-subtitle'>...And Their Recipes In The Largest Dictionary of The Game <a target='_blank' href='https://neal.fun/infinite-craft/'>Infinite Craft</a> With {db_size} Entries.</p>
 			<div className="search-box-container">
 				<input
 					className="search-input"

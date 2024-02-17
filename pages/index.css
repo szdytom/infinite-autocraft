@@ -33,7 +33,7 @@ html {
 	background-color: #ffffff;
 }
 
-a {
+a, footer .important-footer a {
 	color: #0000ee;
 }
 
