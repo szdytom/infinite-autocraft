@@ -3,6 +3,7 @@ import { PriorityQueue } from './pq.mjs';
 import fs from 'node:fs/promises';
 import { serializeToBinary } from 'binary-struct';
 import { BinaryItem, BinaryRecipe, BinaryTransferData } from './data-typedef.mjs';
+import ProgressBar from 'progress';
 
 const db = new Database('./craft.sqlite', { readonly: true });
 
@@ -19,15 +20,6 @@ class Recipe {
 
 	toString() {
 		return `${this.ingrA} + ${this.ingrB} = ${this.result}`;
-	}
-
-	toJSON() {
-		return {
-			id: this.id,
-			ingrA: this.ingrA.id,
-			ingrB: this.ingrB.id,
-			result: this.result.id,
-		};
 	}
 }
 
@@ -73,7 +65,7 @@ for (const item of all_items) {
 }
 
 for (const recipe of all_recipes) {
-	if (recipe.id == NOTHING_ID) {
+	if (recipe.result_id == NOTHING_ID) {
 		continue;
 	}
 	recipe_id_list.push(recipe.id);
@@ -94,11 +86,21 @@ for (let i = 1; i <= 4; ++i) {
 	items_by_id[i].dep = 0;
 	q.push(i, 0);
 }
+
+let vis = [];
 items_by_id[NOTHING_ID].dep = 0;
+
+
+const bar = new ProgressBar(':bar [:percent :current/:total] [:rate items/s] [:etas]', { total: item_id_list.length });
 
 while (!q.empty()) {
 	let xid = q.pop()[0];
 	let x = items_by_id[xid];
+	if (vis[xid]) {
+		continue;
+	}
+	vis[xid] = true;
+	bar.tick();
 
 	for (const edge of x.can_craft) {
 		const p = edge.ingrA.id == xid ? edge.ingrB : edge.ingrA;
@@ -115,6 +117,9 @@ while (!q.empty()) {
 		}
 	}
 }
+
+bar.update(1);
+bar.terminate();
 
 let res = new BinaryTransferData();
 res.NOTHING_ID = NOTHING_ID;

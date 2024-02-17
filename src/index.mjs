@@ -58,7 +58,8 @@ let explored_N = db.prepare('SELECT COUNT(*) AS res FROM Recipes').get().res;
 
 const bestUC_explore_item = db.prepare(`
 SELECT * FROM Items WHERE
-freq IS NOT NULL AND
+-- freq IS NOT NULL AND
+dep <= 10 AND
 ((mask & 1) = 0) ORDER BY
 	((Items.reward + 1) / (Items.explore + 1) + 0.5 * SQRT(? / (Items.explore + 1))) DESC
 LIMIT 1
@@ -72,7 +73,8 @@ LIMIT 1
 //-- freq IS NOT NULL AND 
 const random_explore_item = db.prepare(`
 SELECT * FROM Items WHERE
-freq IS NOT NULL AND
+-- freq IS NOT NULL AND
+dep <= 10 AND
 ((mask & 1) = 0)
 AND NOT EXISTS (
 	SELECT ingrA_id, ingrB_id FROM Recipes WHERE (
@@ -258,7 +260,7 @@ main(exploreUC);
 // 		break;
 // 	}
 // }
-// exploreCustom('Troop', 'Word');
+// exploreCustom('Bear', 'Animal');
 
 process.on('exit', () => db.close());
 process.on('SIGHUP', () => clearInterval(iv));

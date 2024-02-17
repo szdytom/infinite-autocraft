@@ -7,7 +7,9 @@ import './SearchBox.css';
 
 function SearchResult({ keyword, onClick }) {
 	if (keyword == null || keyword == '') {
-		return null;
+		return (
+			<p className='search-item-info'>Type the name of the element you are interested in the search bar, and click "Search".</p>
+		);
 	}
 
 	const exact_match = Item.loadByHandle(keyword);
@@ -23,7 +25,7 @@ function SearchResult({ keyword, onClick }) {
 			const displays = contain_match.slice(0, display_limit);
 			return (
 				<p className='search-item-info'>
-					<>No exact match found, similiar elements are </>
+					<>No exact match found, similar elements are </>
 					{displays.map((x) => (
 						<span key={x.id}>
 							<ItemLink item={x} onClick={onClick} />
@@ -35,12 +37,12 @@ function SearchResult({ keyword, onClick }) {
 			);
 		} else if (contain_match.length == 1) {
 			return (
-				<p className='search-item-info'>No exact match found, similiar elements is <ItemLink item={contain_match[0]} onClick={onClick} />.</p>
+				<p className='search-item-info'>No exact match found, similar element is <ItemLink item={contain_match[0]} onClick={onClick} />.</p>
 			);
 		} else {
 			return (
 				<p className='search-item-info'>
-					<>No exact match found, similiar elements are </>
+					<>No exact match found, similar elements are </>
 					{contain_match.map((x, i) => (
 						<span key={x.id}>
 							{i > 0 && ', '}
@@ -57,17 +59,23 @@ function SearchResult({ keyword, onClick }) {
 }
 
 export default function ItemSearch() {
-	const [searchKeyword, setSearchKeyword] = useState(null);
-	const [searchTerm, setSearchTerm] = useState('');
+	const search_by_hash = location.hash.slice(1);
+	const [searchKeyword, setSearchKeyword] = useState(search_by_hash);
+	const [searchTerm, setSearchTerm] = useState(search_by_hash);
+
+	const makeSearch = (term) => {
+		setSearchKeyword(term);
+		window.location.hash = '#' + term;
+	};
 
 	const handleSearch = () => {
-		setSearchKeyword(searchTerm);
+		makeSearch(searchTerm);
 	};
 
 	const handleLucky = () => {
 		const keyword = Item.getRandomHandle();
 		setSearchTerm(keyword);
-		setSearchKeyword(keyword);
+		makeSearch(keyword);
 	};
 
 	const handleChange = (e) => {
@@ -76,7 +84,7 @@ export default function ItemSearch() {
 
 	const handleLinkClick = (item) => {
 		setSearchTerm(item.handle);
-		setSearchKeyword(item.handle);
+		makeSearch(item.handle);
 	};
 
 	const db_size = Item.count;
