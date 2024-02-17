@@ -68,6 +68,10 @@ for (const recipe of all_recipes) {
 	if (recipe.result_id == NOTHING_ID) {
 		continue;
 	}
+	if (recipe.ingrA == recipe.result_id || recipe.ingrB == recipe.result_id) {
+		continue;
+	}
+
 	recipe_id_list.push(recipe.id);
 	const ingrA = items_by_id[recipe.ingrA_id];
 	const ingrB = items_by_id[recipe.ingrB_id];
