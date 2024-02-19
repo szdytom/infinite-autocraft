@@ -97,7 +97,7 @@ for (let i = 1; i <= 4; ++i) {
 let vis = [];
 items_by_id[NOTHING_ID].dep = 0;
 
-const bar = new ProgressBar(':bar [:percent :current/:total] [:rate items/s] [:etas]', { total: item_id_list.length });
+let bar = new ProgressBar(':bar [:percent :current/:total] [:rate items/s] [:etas]', { total: item_id_list.length });
 
 while (!q.empty()) {
 	let xid = q.pop()[0];
@@ -106,7 +106,6 @@ while (!q.empty()) {
 		continue;
 	}
 	vis[xid] = true;
-	update_item_dep.run({dep: x.dep, id: xid});
 	bar.tick();
 
 	for (const edge of x.can_craft) {
@@ -124,6 +123,24 @@ while (!q.empty()) {
 		}
 	}
 }
+
+bar.update(1);
+bar.terminate();
+
+bar = new ProgressBar(':bar [:percent :current/:total] [:rate items/s] [:etas]', { total: item_id_list.length });
+
+db.transaction(() => {
+	for (const id of item_id_list) {
+		if (id == NOTHING_ID) {
+			continue;
+		}
+		const it = items_by_id[id];
+		if (it.dep != -1) {
+			update_item_dep.run({ id, dep: it.dep });
+			bar.tick();
+		}
+	}
+})();
 
 bar.update(1);
 bar.terminate();

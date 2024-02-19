@@ -32,6 +32,8 @@ CREATE TABLE Recipes (
 	ingrA_id INTEGER NOT NULL,
 	ingrB_id INTEGER NOT NULL,
 	result_id INTEGER DEFAULT NULL,
+    mask      INTEGER NOT NULL
+                      DEFAULT (0),
 	FOREIGN KEY (ingrA_id) REFERENCES Items(id),
 	FOREIGN KEY (ingrB_id) REFERENCES Items(id),
 	FOREIGN KEY (result_id) REFERENCES Items(id)

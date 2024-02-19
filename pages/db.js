@@ -46,6 +46,7 @@ export async function initialize() {
 	}
 
 	Item.count = adata.items.length;
+	Recipes.count = adata.recipes.length;
 }
 
 export class Recipes {
@@ -57,6 +58,7 @@ export class Recipes {
 	}
 
 	static recipes_loaded = new Map();
+	static count = 0;
 
 	static loadById(id) {
 		if (id == 0 || !recipes_by_id.has(id)) {

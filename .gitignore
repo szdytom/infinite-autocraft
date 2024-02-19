@@ -8,3 +8,4 @@ dist
 pages/data.json
 *.dat
 *.zst
+relevant_recipes.json
