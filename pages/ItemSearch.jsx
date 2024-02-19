@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Item } from './db';
+import { Item, Recipes } from './db';
 import ItemFull from './ItemFull';
 import { ItemLink } from './ItemName';
 import './ItemSearch.css';
@@ -8,7 +8,9 @@ import './SearchBox.css';
 function SearchResult({ keyword, onClick }) {
 	if (keyword == null || keyword == '') {
 		return (
-			<p className='search-item-info'>Type the name of the element you are interested in the search bar, and click "Search".</p>
+			<>
+				<p className='search-item-info'>Type the name of the element you are interested in the search bar, and click "Search".</p>
+			</>
 		);
 	}
 
@@ -87,12 +89,10 @@ export default function ItemSearch() {
 		makeSearch(item.handle);
 	};
 
-	const db_size = Item.count;
-
 	return (
 		<div>
 			<h1 className='search-item-title'>Search Elements</h1>
-			<p className='search-item-subtitle'>...And Their Recipes In The Largest Dictionary of The Game <a target='_blank' href='https://neal.fun/infinite-craft/'>Infinite Craft</a> With {db_size} Entries.</p>
+			<p className='search-item-subtitle'>...and Their Recipes In The Largest Dictionary of The Game <a target='_blank' href='https://neal.fun/infinite-craft/'>Infinite Craft</a>.</p>
 			<div className="search-box-container">
 				<input
 					className="search-input"
@@ -108,6 +108,7 @@ export default function ItemSearch() {
 					I'm Feeling Lucky
 				</button>
 			</div>
+			<span className='total-number-info'>{Item.count} elements, {Recipes.count} recipes.</span>
 			<div className='search-result'>
 				<SearchResult keyword={searchKeyword} onClick={handleLinkClick} />
 			</div>

@@ -9,3 +9,8 @@
 .search-item-info {
 	font-style: italic;
 }
+
+.total-number-info {
+	font-size: small;
+	/* color: #666; */
+}
