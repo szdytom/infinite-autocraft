@@ -2,8 +2,37 @@ import { useState } from 'react';
 import { Item, Recipes } from './db';
 import ItemFull from './ItemFull';
 import { ItemLink } from './ItemName';
+import { RecipeTable } from './RecipeTable';
 import './ItemSearch.css';
 import './SearchBox.css';
+
+function RecipeSearchResult({ keyword, children }) {
+	const val = keyword.split('+');
+	let res = [];
+	for (let i = 1; i < val.length; i += 1) {
+		const Ahandle = val.slice(0, i).join('+').trim();
+		const Bhandle = val.slice(i).join('+').trim();
+		const A = Item.loadByHandle(Ahandle);
+		if (A == null) {
+			continue;
+		}
+
+		const R = A.can_craft.filter(r => (
+			(r.ingrA.handle == Ahandle && r.ingrB.handle == Bhandle) ||
+			(r.ingrB.handle == Ahandle && r.ingrA.handle == Bhandle)
+		));
+		res = res.concat(R);
+	}
+	if (res.length == 0) {
+		return children;
+	}
+	return (
+		<div class="search-recipe">
+			<h2>Matching Recipe</h2>
+			{[<RecipeTable recipes={res} />]}
+		</div>
+	);
+}
 
 function SearchResult({ keyword, onClick }) {
 	if (keyword == null || keyword == '') {
@@ -14,9 +43,22 @@ function SearchResult({ keyword, onClick }) {
 		);
 	}
 
+	if (keyword.startsWith('?=')) {
+		return (
+			<RecipeSearchResult keyword={keyword.slice(2)}>
+				<p className='search-item-info'>No match found.</p>
+			</RecipeSearchResult>
+		);
+	}
+
 	const exact_match = Item.loadByHandle(keyword);
 	if (exact_match != null) {
-		return [<ItemFull key={exact_match.id} value={exact_match}></ItemFull>];
+		return (
+			<>
+				{keyword.includes('+') && <RecipeSearchResult keyword={keyword} />}
+				{[<ItemFull key={exact_match.id} value={exact_match}></ItemFull>]}
+			</>
+		);
 	}
 
 	const contain_match = Item.findByHandleContains(keyword.trim());
@@ -57,11 +99,20 @@ function SearchResult({ keyword, onClick }) {
 			)
 		}
 	}
+
+	if (keyword.includes('+')) {
+		return (
+			<RecipeSearchResult keyword={keyword}>
+				<p className='search-item-info'>No match found.</p>
+			</RecipeSearchResult>
+		);
+	}
+
 	return <p className='search-item-info'>No match found.</p>;
 }
 
 export default function ItemSearch() {
-	const search_by_hash = location.hash.slice(1);
+	const search_by_hash = decodeURIComponent(location.hash.slice(1));
 	const [searchKeyword, setSearchKeyword] = useState(search_by_hash);
 	const [searchTerm, setSearchTerm] = useState(search_by_hash);
 
@@ -97,7 +148,7 @@ export default function ItemSearch() {
 				<input
 					className="search-input"
 					type="text"
-					placeholder="Element Name..."
+					placeholder="Element Name or ?=A+B..."
 					value={searchTerm}
 					onChange={handleChange}
 				/>

@@ -297,6 +297,13 @@ async function buildRecipesDBExploreList() {
 	}
 }
 
+async function buildContributionList() {
+	const data = JSON.parse(await fs.readFile('./relevant_recipes.json', 'utf-8'));
+	for (const v of data) {
+		eq.pushBack(v);
+	}
+}
+
 function buildBasicExploreList() {
 	const basics = ['Crafting', 'Time', 'Kernel'];
 	for (const b of basics) {
@@ -366,9 +373,10 @@ async function main(exploreFunc) {
 
 // buildSelfExploreList();
 // buildBasicExploreList();
-buildRecipesDBExploreList();
+// buildRecipesDBExploreList();
 // await buildLoadInFiniteCraftFirstList();
-main(importByQueue);
+await buildContributionList();
+main(exploreByQueue);
 // console.log(await doCraft('Wig', 'Lizard'));
 // for (let i = ; i <= 2025; ++i) {
 // 	if (!await exploreCustom(`Windows ${i}`, 'Last')) {
