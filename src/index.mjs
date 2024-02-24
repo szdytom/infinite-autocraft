@@ -2,16 +2,19 @@ import fetch from 'node-fetch';
 import Database from 'better-sqlite3';
 import { AsyncTokenBucket, Queue } from './token-bucket.mjs';
 import fs from 'node:fs/promises';
+import { firefox } from 'playwright';
 
 const CLASSIC_UA = 'Mozilla/5.0 (X11; Linux x86_64; rv:122.0) Gecko/20100101 Firefox/122.0';
 const API_ENDPOINT = 'https://neal.fun/api/infinite-craft/pair?';
 const DISGUISE_HEADERS = {
-	'User-Agent': CLASSIC_UA,
+	// 'User-Agent': CLASSIC_UA,
 	'Accept-Language': 'zh-CN,zh;q=0.8,en-US;q=0.7,zh-TW;q=0.5,zh-HK;q=0.3,en;q=0.2',
-	'Referer': 'https://neal.fun/infinite-craft/',
+	// 'Referer': 'https://neal.fun/infinite-craft/',
+	'DNT': '1',
 	'Sec-Fetch-Dest': 'empty',
 	'Sec-Fetch-Mode': 'cors',
 	'Sec-Fetch-Site': 'same-origin',
+	'Sec-GPC': '1',
 	'Connection': 'keep-alive',
 };
 
@@ -24,7 +27,8 @@ const RecipeDB_DISGUISE_HEADERS = {
 	'Sec-Fetch-Dest': 'empty',
 	'Sec-Fetch-Mode': 'cors',
 	'Sec-Fetch-Site': 'cross-site',
-	'Connection': 'keep-alive',
+	// 'Connection': 'keep-alive',
+	'TE': 'trailers',
 }
 
 let isExiting = false;
@@ -35,27 +39,47 @@ function sleep(t) {
 	});
 }
 
-async function doCraft(ingrA, ingrB, retry = 10) {
+const browser = await firefox.launch({
+	// headless: false,
+	proxy: {
+		server: 'sock5://127.0.0.1:2080',
+	},
+});
+const page = await browser.newPage();
+await page.goto('https://neal.fun/infinite-craft/');
+console.log('Initialized headless-browser');
+
+async function fetchFF(url, options = {}) {
+	const responseBody = await page.evaluate(async ({url, options}) => {
+		const fetchResponse = await fetch(url, options);
+		return await fetchResponse.json();
+	}, {url, options});
+
+	return responseBody;
+}
+
+async function doCraft(ingrA, ingrB, retry = 3) {
+	console.log(`Start downloading ${ingrA} + ${ingrB}`);
 	try {
-		const req = await fetch(API_ENDPOINT + new URLSearchParams({
+		const data = await fetchFF(API_ENDPOINT + new URLSearchParams({
 			first: ingrA,
 			second: ingrB,
 		}), {
-			headers: DISGUISE_HEADERS
+			headers: DISGUISE_HEADERS,
 		});
-		const data = await req.text();
-		if (data.startsWith('<!DOCTYPE')) {
-			if (retry <= 0) {
-				console.error('[ERROR] All retries used, CloudFlare Rate Limit');
-				return null;
-			} else {
-				console.error('[RETRY] CloudFlare Rate Limit');
-				await sleep(1000);
-				return await doCraft(ingrA, ingrB, retry - 1);
-			}
-		}
-		return JSON.parse(data);
+		// if (data.startsWith('<!DOCTYPE')) {
+		// 	if (retry <= 0) {
+		// 		console.error('[ERROR] All retries used, CloudFlare Rate Limit');
+		// 		return null;
+		// 	} else {
+		// 		console.error('[RETRY] CloudFlare Rate Limit');
+		// 		await sleep(1000);
+		// 		return await doCraft(ingrA, ingrB, retry - 1);
+		// 	}
+		// }
+		return data;
 	} catch (e) {
+		console.log(e);
 		if (retry <= 0) {
 			console.error('[ERROR] All retries used.');
 			return null;
@@ -164,7 +188,7 @@ async function exploreWith(ingrA, ingrB) {
 	update_explore_count.run(ingrA.id);
 	update_explore_count.run(ingrB.id);
 	create_new_recipe.run(ingrA.id, ingrB.id, null);
-	let recc = load_recipe_by_ingredients.get({aid: ingrA.id, bid: ingrB.id});
+	let recc = load_recipe_by_ingredients.get({ aid: ingrA.id, bid: ingrB.id });
 
 	const res = await doCraft(ingrA.handle, ingrB.handle);
 	if (res == null) {
@@ -216,7 +240,7 @@ async function exploreUC() {
 	const lnN2 = Math.log(explored_N + 1) / 2;
 	const ingrA = bestUC_explore_item.get(lnN2);
 	explored_N += 1;
-	const ingrB = random_explore_item.get({other: ingrA.id});
+	const ingrB = random_explore_item.get({ other: ingrA.id });
 	if (ingrB == null) {
 		update_explore_count.run(ingrA.id);
 		return -1;
@@ -266,7 +290,7 @@ async function requestRecipesDB(page) {
 			headers: RecipeDB_DISGUISE_HEADERS,
 		});
 		return await res.json();
-	} catch(e) {
+	} catch (e) {
 		console.log(`RECIPE_DB REQUEST FAILED!`);
 		return null;
 	}
@@ -340,14 +364,15 @@ async function main(exploreFunc) {
 	let bucket = new AsyncTokenBucket(CO_TASK_MAX);
 	await bucket.aquire();
 	iv = setInterval(() => {
-		if (fail_cnt < ERR_MAX) {
+		if (!isExiting && fail_cnt < ERR_MAX) {
 			if (task_cnt < CO_TASK_MAX) {
 				bucket.refill();
 			}
 		} else {
 			clearInterval(iv);
+			browser.close();
 		}
-	}, 125);
+	}, 250);
 
 	while (true) {
 		await bucket.aquire();
@@ -360,6 +385,7 @@ async function main(exploreFunc) {
 				let x = await exploreFunc();
 				if (x < 0) {
 					fail_cnt += 1;
+					break;
 				}
 
 				if (x != 0) {
@@ -378,6 +404,10 @@ async function main(exploreFunc) {
 await buildContributionList();
 main(exploreByQueue);
 // console.log(await doCraft('Wig', 'Lizard'));
+// console.log(await (await fetch('https://tls.peet.ws/api/all', {
+// 	agent: FF_DISGUISE_AGENT,
+// })).json())
+// console.log(await doCraft('Lava', 'Water'));
 // for (let i = ; i <= 2025; ++i) {
 // 	if (!await exploreCustom(`Windows ${i}`, 'Last')) {
 // 		break;
@@ -385,7 +415,10 @@ main(exploreByQueue);
 // }
 // exploreCustom('Arch', 'Linux');
 
-process.on('exit', () => db.close());
+process.on('exit', async () => {
+	db.close();
+	await browser.close();
+});
 process.on('SIGHUP', () => clearInterval(iv));
 process.on('SIGINT', () => {
 	console.log('Exiting...');
