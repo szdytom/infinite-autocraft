@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Item, Recipes } from './db';
 import ItemFull from './ItemFull';
 import { ItemLink } from './ItemName';
@@ -116,6 +116,19 @@ export default function ItemSearch() {
 	const [searchKeyword, setSearchKeyword] = useState(search_by_hash);
 	const [searchTerm, setSearchTerm] = useState(search_by_hash);
 
+	useEffect(() => {
+		const handler = () => {
+			const search_by_hash = decodeURIComponent(location.hash.slice(1));
+			setSearchKeyword(search_by_hash);
+			setSearchTerm(search_by_hash)
+		};
+
+		window.addEventListener('hashchange', handler);
+		return () => {
+			window.removeEventListener('hashchange', handler);
+		}
+	}, [setSearchTerm, setSearchKeyword]);
+
 	const makeSearch = (term) => {
 		setSearchKeyword(term);
 		window.location.hash = '#' + term;
@@ -140,6 +153,12 @@ export default function ItemSearch() {
 		makeSearch(item.handle);
 	};
 
+	const handleInputKeydown = (event) => {
+		if (event.code == 'Enter') {
+			handleSearch();
+		}
+	};
+
 	return (
 		<div>
 			<h1 className='search-item-title'>Search Elements</h1>
@@ -151,6 +170,7 @@ export default function ItemSearch() {
 					placeholder="Element Name or ?=A+B..."
 					value={searchTerm}
 					onChange={handleChange}
+					onKeyDown={handleInputKeydown}
 				/>
 				<button className="search-button" onClick={handleSearch}>
 					Search
